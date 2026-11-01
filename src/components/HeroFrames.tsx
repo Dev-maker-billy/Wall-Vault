@@ -14,13 +14,20 @@ const SHAPES = [
   { label: 'Tall phone', w: 1440, h: 3200 },
 ];
 
+// Rule-of-thirds guide lines, so the frame reads as a crop tool.
+const LINE = 'rgba(237, 235, 248, 0.22)';
+const thirds = (direction: 'to right' | 'to bottom') =>
+  `linear-gradient(${direction}, transparent calc(33.333% - 0.5px), ${LINE} calc(33.333% - 0.5px), ${LINE} calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px), transparent calc(66.666% - 0.5px), ${LINE} calc(66.666% - 0.5px), ${LINE} calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px))`;
+const THIRDS_GRID = `${thirds('to right')}, ${thirds('to bottom')}`;
+
+const handle = 'absolute h-2 w-2 bg-glow';
+
 /**
  * One wallpaper shown on a monitor and a phone at once. A crop frame on the monitor keeps
  * changing shape to show what each download size keeps. On a mouse, the frames tilt with the pointer.
  */
 export default function HeroFrames({ wallpaper }: { wallpaper: Wallpaper }) {
   const src = storageUrl(wallpaper.thumb_path);
-  const wrapRef = useRef<HTMLDivElement>(null);
   const tiltRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [reduced, setReduced] = useState(false);
@@ -58,7 +65,6 @@ export default function HeroFrames({ wallpaper }: { wallpaper: Wallpaper }) {
 
   return (
     <div
-      ref={wrapRef}
       aria-hidden="true"
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
@@ -85,15 +91,22 @@ export default function HeroFrames({ wallpaper }: { wallpaper: Wallpaper }) {
                   width: `${widthPct}%`,
                   height: `${heightPct}%`,
                   transform: 'translate(-50%, -50%)',
-                  transition: 'width 0.8s cubic-bezier(0.6, 0, 0.2, 1), height 0.8s cubic-bezier(0.6, 0, 0.2, 1)',
+                  backgroundImage: THIRDS_GRID,
+                  transition:
+                    'width 0.8s cubic-bezier(0.6, 0, 0.2, 1), height 0.8s cubic-bezier(0.6, 0, 0.2, 1)',
                 }}
-              />
+              >
+                <span className={`${handle} -left-[5px] -top-[5px]`} />
+                <span className={`${handle} -right-[5px] -top-[5px]`} />
+                <span className={`${handle} -bottom-[5px] -left-[5px]`} />
+                <span className={`${handle} -bottom-[5px] -right-[5px]`} />
+              </div>
             </div>
           </div>
           <div className="mx-auto h-3 w-24 rounded-b-md bg-line" />
         </div>
 
-        <p key={step} className="swap absolute bottom-2 left-1 text-sm text-mute">
+        <p key={step} className="swap absolute bottom-2 left-1 text-sm tabular-nums text-mute">
           {shape.label}, {shape.w} × {shape.h}
         </p>
 

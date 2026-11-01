@@ -306,7 +306,7 @@ function SizeCard({
         />
       </span>
       <span className="text-sm font-medium text-bone">{label}</span>
-      <span className="text-xs text-mute">{dims}</span>
+      <span className="text-xs tabular-nums text-mute">{dims}</span>
     </label>
   );
 }

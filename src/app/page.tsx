@@ -33,7 +33,7 @@ export default async function Home() {
           }`}
         >
           <div>
-            <h1 className="font-display text-[2.4rem] font-bold leading-[1.05] tracking-tight sm:text-6xl xl:text-7xl">
+            <h1 className="font-display text-[1.9rem] font-semibold leading-[1.08] tracking-[-0.02em] sm:text-6xl xl:text-7xl">
               <span className="-mb-[0.14em] block overflow-hidden pb-[0.14em]">
                 <span className="hero-line" style={delay(0)}>
                   One wallpaper.
@@ -50,7 +50,12 @@ export default async function Home() {
               pixel size.
             </p>
             {featured && (
-              <a href="#gallery" className="btn-primary hero-fade mt-8 px-6 py-3" style={delay(600)}>
+              <a
+                href="#gallery"
+                data-magnetic
+                className="btn-primary hero-fade magnetic mt-8 px-6 py-3"
+                style={delay(600)}
+              >
                 Browse wallpapers
               </a>
             )}

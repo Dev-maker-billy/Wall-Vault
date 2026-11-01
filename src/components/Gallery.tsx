@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Wallpaper } from '@/lib/types';
 import { storageUrl } from '@/lib/storage';
 import DownloadModal from './DownloadModal';
@@ -14,7 +14,11 @@ type Props = {
 export default function Gallery({ wallpapers, configured, error }: Props) {
   const [activeTag, setActiveTag] = useState<string>('all');
   const [selected, setSelected] = useState<Wallpaper | null>(null);
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const pillRefs = useRef(new Map<string, HTMLButtonElement>());
+  const firstRun = useRef(true);
 
   // Tags come straight from the data, most used first.
   const tags = useMemo(() => {
@@ -27,6 +31,36 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
     () => (activeTag === 'all' ? wallpapers : wallpapers.filter((w) => w.tags.includes(activeTag))),
     [wallpapers, activeTag],
   );
+
+  // The highlight slides to the chosen pill, and the pill row scrolls to keep it in view.
+  useLayoutEffect(() => {
+    const bar = barRef.current;
+    const pill = pillRefs.current.get(activeTag);
+    if (!bar || !pill) return;
+
+    const measure = () => {
+      const current = pillRefs.current.get(activeTag);
+      if (!current) return;
+      const next = { left: current.offsetLeft, width: current.offsetWidth };
+      setIndicator((prev) =>
+        prev && prev.left === next.left && prev.width === next.width ? prev : next,
+      );
+    };
+    measure();
+
+    // Skip the first run so the page doesn't scroll sideways on load.
+    if (!firstRun.current) {
+      bar.scrollTo({
+        left: pill.offsetLeft - (bar.clientWidth - pill.offsetWidth) / 2,
+        behavior: 'smooth',
+      });
+    }
+    firstRun.current = false;
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(bar);
+    return () => observer.disconnect();
+  }, [activeTag, tags]);
 
   // Tiles ease in as they enter the screen. Changing the filter remounts the list, so it replays.
   useEffect(() => {
@@ -75,15 +109,48 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
     return <Notice title="Nothing here yet">New wallpapers will show up here as they are added.</Notice>;
   }
 
+  const register = (key: string) => (el: HTMLButtonElement | null) => {
+    if (el) pillRefs.current.set(key, el);
+    else pillRefs.current.delete(key);
+  };
+
   return (
     <section id="gallery" className="scroll-mt-0">
       <div className="sticky top-0 z-10 border-b border-line bg-ink/90 backdrop-blur">
-        <div className="mx-auto flex max-w-[1600px] gap-2 overflow-x-auto px-4 py-3 sm:px-8">
-          <Pill active={activeTag === 'all'} onClick={() => setActiveTag('all')} count={wallpapers.length}>
+        <div
+          ref={barRef}
+          className="relative mx-auto flex max-w-[1600px] gap-2 overflow-x-auto px-4 py-3 sm:px-8"
+        >
+          {indicator && (
+            <span
+              aria-hidden="true"
+              className="absolute left-0 top-3 h-[34px] rounded-full bg-glow"
+              style={{
+                width: indicator.width,
+                transform: `translateX(${indicator.left}px)`,
+                transition:
+                  'transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1)',
+              }}
+            />
+          )}
+          <Pill
+            buttonRef={register('all')}
+            active={activeTag === 'all'}
+            slides={indicator !== null}
+            onClick={() => setActiveTag('all')}
+            count={wallpapers.length}
+          >
             All
           </Pill>
           {tags.map(([tag, count]) => (
-            <Pill key={tag} active={activeTag === tag} onClick={() => setActiveTag(tag)} count={count}>
+            <Pill
+              key={tag}
+              buttonRef={register(tag)}
+              active={activeTag === tag}
+              slides={indicator !== null}
+              onClick={() => setActiveTag(tag)}
+              count={count}
+            >
               {tag}
             </Pill>
           ))}
@@ -117,7 +184,7 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
                 onClick={() => setSelected(w)}
                 data-cursor="tile"
                 aria-label={`${w.title}: choose a size and download`}
-                className="group block w-full text-left"
+                className="tile-inner group block w-full text-left"
               >
                 <span className="block" style={{ paddingBottom: `${(1 / ratio) * 100}%` }} />
                 {/* Plain img on purpose: thumbnails are pre-sized at upload, so Vercel image optimization isn't needed. */}
@@ -133,7 +200,7 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
                 />
                 <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 to-transparent p-3 pt-12 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
                   <span className="truncate text-sm font-semibold">{w.title}</span>
-                  <span className="shrink-0 text-xs text-bone/70">
+                  <span className="shrink-0 text-xs tabular-nums text-bone/70">
                     {w.width} × {w.height}
                   </span>
                 </span>
@@ -150,28 +217,34 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
 
 function Pill({
   active,
+  slides,
   onClick,
   count,
+  buttonRef,
   children,
 }: {
   active: boolean;
+  /** True once the sliding highlight is measured; before that the active pill paints its own fill. */
+  slides: boolean;
   onClick: () => void;
   count: number;
+  buttonRef: (el: HTMLButtonElement | null) => void;
   children: React.ReactNode;
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-4 pr-3 text-sm transition duration-200 active:scale-95 ${
+      className={`relative flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-4 pr-3 text-sm font-medium transition duration-200 active:scale-95 ${
         active
-          ? 'border-glow bg-glow font-semibold text-glow-ink'
+          ? `border-transparent text-glow-ink ${slides ? '' : 'bg-glow'}`
           : 'border-line text-bone hover:border-mute'
       }`}
     >
       {children}
-      <span className={`text-xs ${active ? 'text-glow-ink/70' : 'text-mute'}`}>{count}</span>
+      <span className={`text-xs tabular-nums ${active ? 'text-glow-ink/70' : 'text-mute'}`}>{count}</span>
     </button>
   );
 }
