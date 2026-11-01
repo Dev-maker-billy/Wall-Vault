@@ -6,6 +6,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Wall Vault',
   description: 'Wallpapers that download cropped to your exact screen size.',
+  icons: { icon: '/icon-192.png', apple: '/apple-touch-icon.png' },
 };
 
 export const viewport: Viewport = {

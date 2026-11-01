@@ -30,6 +30,9 @@
   .btn-primary {
     @apply inline-flex items-center justify-center rounded-md bg-glow px-5 py-2.5 text-sm font-semibold text-glow-ink disabled:cursor-not-allowed disabled:opacity-50;
   }
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-md border border-danger/50 px-3 py-2 text-sm text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50;
+  }
   .btn-quiet {
     @apply inline-flex items-center justify-center rounded-md border border-line px-3 py-2 text-sm text-bone hover:border-mute disabled:cursor-not-allowed disabled:opacity-50;
   }

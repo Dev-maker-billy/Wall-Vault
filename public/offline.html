@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0B0E1A" />
+    <title>Offline</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: #0B0E1A;
+        color: #EDEBF8;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      main { max-width: 360px; }
+      h1 { margin: 0 0 8px; font-size: 1.5rem; }
+      p { margin: 0 0 20px; line-height: 1.5; color: #9499B8; }
+      button {
+        font: inherit;
+        font-weight: 600;
+        padding: 10px 20px;
+        border: 0;
+        border-radius: 8px;
+        background: #A594FF;
+        color: #120C33;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>You're offline</h1>
+      <p>Wall Vault Admin needs a connection to upload or remove wallpapers. Reconnect, then try again.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>
