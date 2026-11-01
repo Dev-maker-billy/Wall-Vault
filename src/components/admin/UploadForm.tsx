@@ -9,7 +9,7 @@ import {
   type KeyboardEvent,
 } from 'react';
 import { getSupabase } from '@/lib/supabase';
-import { BUCKET } from '@/lib/storage';
+import { BUCKET, ORIGINALS_BUCKET } from '@/lib/storage';
 import { prepareUpload } from '@/lib/resize';
 import { mergeTags, parseTags } from '@/lib/tags';
 import { formatBytes } from '@/lib/format';
@@ -110,7 +110,7 @@ export default function UploadForm({ existingTags, onUploaded }: Props) {
 
     setBusy(true);
     const id = crypto.randomUUID();
-    const filePath = `${id}/original.${ext}`;
+    const originalPath = `${id}/original.${ext}`;
     const thumbPath = `${id}/thumb.jpg`;
 
     try {
@@ -118,7 +118,8 @@ export default function UploadForm({ existingTags, onUploaded }: Props) {
       const { width, height, thumb } = await prepareUpload(file);
 
       setStatus('Uploading original…');
-      const original = await supabase.storage.from(BUCKET).upload(filePath, file, {
+      // The full-size original goes to the private bucket. Only the small preview is public.
+      const original = await supabase.storage.from(ORIGINALS_BUCKET).upload(originalPath, file, {
         contentType: file.type,
         cacheControl: '31536000',
       });
@@ -130,7 +131,7 @@ export default function UploadForm({ existingTags, onUploaded }: Props) {
         cacheControl: '31536000',
       });
       if (preview.error) {
-        await supabase.storage.from(BUCKET).remove([filePath]);
+        await supabase.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
         throw preview.error;
       }
 
@@ -139,14 +140,16 @@ export default function UploadForm({ existingTags, onUploaded }: Props) {
         id,
         title: cleanTitle,
         tags: finalTags,
-        file_path: filePath,
+        original_path: originalPath,
+        file_path: null,
         thumb_path: thumbPath,
         width,
         height,
         size_bytes: file.size,
       });
       if (inserted.error) {
-        await supabase.storage.from(BUCKET).remove([filePath, thumbPath]);
+        await supabase.storage.from(ORIGINALS_BUCKET).remove([originalPath]);
+        await supabase.storage.from(BUCKET).remove([thumbPath]);
         throw inserted.error;
       }
 

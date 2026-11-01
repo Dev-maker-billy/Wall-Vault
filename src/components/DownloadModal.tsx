@@ -94,7 +94,19 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
     setError(null);
     setDone(null);
     try {
-      const blob = await renderWallpaper(storageUrl(wallpaper.file_path), target.w, target.h, format);
+      // Private originals come through a link that expires after a minute. Older uploads that
+      // haven't been made private yet still use their public address.
+      let source: string;
+      if (wallpaper.file_path) {
+        source = storageUrl(wallpaper.file_path);
+      } else {
+        const res = await fetch(`/api/original?id=${encodeURIComponent(wallpaper.id)}`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error('link');
+        source = (await res.json()).url as string;
+      }
+      const blob = await renderWallpaper(source, target.w, target.h, format);
       const ext = format === 'png' ? 'png' : 'jpg';
       saveBlob(blob, `${slugify(wallpaper.title)}-${target.w}x${target.h}.${ext}`);
       setDone(`Saved ${target.w} × ${target.h} as ${ext.toUpperCase()}.`);

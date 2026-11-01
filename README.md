@@ -14,7 +14,8 @@ A wallpaper site that costs $0 to run. Visitors pick a wallpaper and a screen si
 | Download modal with live crop preview | `src/components/DownloadModal.tsx` |
 | Center-crop and scale logic | `src/lib/resize.ts` |
 | Admin upload page at `/admin` | `src/app/admin/page.tsx` |
-| Database and storage setup | `supabase/schema.sql` |
+| Database and storage setup | `supabase/schema.sql` (new projects), `supabase/protect-originals.sql` (existing ones) |
+| One-minute download links | `src/app/api/original/route.ts` |
 
 When you upload, the browser also makes a small preview image (900 px on the long side). The gallery loads only previews. The full original is fetched only when someone presses Download. This keeps you well inside Supabase's free 5 GB monthly egress.
 
@@ -39,6 +40,7 @@ When you upload, the browser also makes a small preview image (900 px on the lon
    | --- | --- |
    | `NEXT_PUBLIC_SUPABASE_URL` | your Project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | your anon public key |
+   | `SUPABASE_SERVICE_ROLE_KEY` | your **service_role** key (Project Settings > API). Secret: server only, never share it or add `NEXT_PUBLIC_` to its name. |
 
 5. Press **Deploy**.
 6. Check **Settings > Git** in the Vercel project: **Production Branch** should be `main`.
@@ -54,6 +56,21 @@ If you add or change an environment variable later, Vercel only applies it to ne
 3. New wallpapers show up on the homepage within a minute. The page refreshes its data at most once every 60 seconds.
 
 The admin page isn't linked anywhere and is marked `noindex`, but the real protection is the login and the database rules.
+
+## Protecting the full-size images
+
+Nothing on a website can fully stop someone saving an image they can see: screenshots and browser developer tools always work. What Wall Vault does is make the real file hard to reach.
+
+- **Originals are private.** Full-size files live in a private Supabase bucket called `originals`. Nobody can open them by address. The gallery only loads small previews.
+- **Download links expire.** When someone presses Download, the site (`/api/original`) creates a link that works for one minute and only answers requests that come from this site's own pages. Pasting an image address into another website, or opening it in a new tab, gets nothing.
+- **Hidden file locations.** Visitors can't read where an original is stored.
+- **No casual saving.** Right-click, dragging an image out, and long-press "save image" are switched off on the homepage.
+
+### Turning it on for an existing site
+
+1. In Supabase, open **SQL Editor**, paste the whole of `supabase/protect-originals.sql`, and press **Run**. (A brand-new project can use `schema.sql` instead, which already includes this.)
+2. In Vercel, add the `SUPABASE_SERVICE_ROLE_KEY` variable (see step 2.4 above), then redeploy.
+3. Open `/admin`. If older wallpapers still have a public original, a banner offers **Make all private**. Press it once.
 
 ## Local development
 

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import Cursor from '@/components/Cursor';
 import Gallery from '@/components/Gallery';
 import HeroFrames from '@/components/HeroFrames';
+import ImageGuard from '@/components/ImageGuard';
 import { fetchWallpapers } from '@/lib/data';
 
 // Re-fetch from Supabase at most once a minute. Keeps the page static and fast on Vercel's free tier.
@@ -16,6 +17,7 @@ export default async function Home() {
   return (
     <main>
       <Cursor />
+      <ImageGuard />
       {/* Without JavaScript the scroll animations can't run, so show everything. */}
       <noscript>
         <style>{'.reveal{opacity:1!important;transform:none!important}'}</style>

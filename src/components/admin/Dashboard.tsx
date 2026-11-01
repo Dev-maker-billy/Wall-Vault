@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSupabase } from '@/lib/supabase';
-import { BUCKET } from '@/lib/storage';
+import { BUCKET, ORIGINALS_BUCKET, storageUrl } from '@/lib/storage';
 import { formatBytes } from '@/lib/format';
 import type { Wallpaper } from '@/lib/types';
 import UploadForm from './UploadForm';
@@ -15,6 +15,8 @@ export default function Dashboard({ email }: { email: string }) {
   const [items, setItems] = useState<Wallpaper[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!supabase) return;
@@ -43,15 +45,78 @@ export default function Dashboard({ email }: { email: string }) {
 
   const used = useMemo(() => items.reduce((sum, w) => sum + (w.size_bytes ?? 0), 0), [items]);
   const percent = Math.min(100, (used / STORAGE_LIMIT) * 100);
+  const publicOriginals = useMemo(() => items.filter((w) => w.file_path), [items]);
 
   async function removeWallpaper(w: Wallpaper): Promise<string | null> {
     if (!supabase) return 'Not connected to Supabase.';
-    const removed = await supabase.storage.from(BUCKET).remove([w.file_path, w.thumb_path]);
-    if (removed.error) return `Delete failed: ${removed.error.message}`;
+
+    if (w.original_path) {
+      const removed = await supabase.storage.from(ORIGINALS_BUCKET).remove([w.original_path]);
+      if (removed.error) return `Delete failed: ${removed.error.message}`;
+    }
+    const publicFiles = [w.thumb_path, ...(w.file_path ? [w.file_path] : [])];
+    const removedPublic = await supabase.storage.from(BUCKET).remove(publicFiles);
+    if (removedPublic.error) return `Delete failed: ${removedPublic.error.message}`;
+
     const deleted = await supabase.from('wallpapers').delete().eq('id', w.id);
     if (deleted.error) return `Delete failed: ${deleted.error.message}`;
     await refresh();
     return null;
+  }
+
+  /** Copies an old public original into the private bucket, switches the record over, removes the public copy. */
+  async function protectOne(w: Wallpaper): Promise<string | null> {
+    if (!supabase || !w.file_path) return null;
+    try {
+      const response = await fetch(storageUrl(w.file_path));
+      if (!response.ok) return `Couldn't read "${w.title}" (${response.status}).`;
+      const blob = await response.blob();
+
+      const ext = w.file_path.split('.').pop() || 'jpg';
+      const privatePath = `${w.id}/original.${ext}`;
+      const uploaded = await supabase.storage.from(ORIGINALS_BUCKET).upload(privatePath, blob, {
+        contentType: blob.type || undefined,
+        cacheControl: '31536000',
+        upsert: true,
+      });
+      if (uploaded.error) return `Couldn't make "${w.title}" private: ${uploaded.error.message}`;
+
+      const updated = await supabase
+        .from('wallpapers')
+        .update({ original_path: privatePath, file_path: null })
+        .eq('id', w.id);
+      if (updated.error) {
+        await supabase.storage.from(ORIGINALS_BUCKET).remove([privatePath]);
+        return `Couldn't make "${w.title}" private: ${updated.error.message}`;
+      }
+
+      const removed = await supabase.storage.from(BUCKET).remove([w.file_path]);
+      if (removed.error) {
+        return `"${w.title}" is private now, but the old public copy couldn't be removed: ${removed.error.message}`;
+      }
+      return null;
+    } catch {
+      return `Couldn't make "${w.title}" private. Check your connection and try again.`;
+    }
+  }
+
+  async function protectWallpaper(w: Wallpaper): Promise<string | null> {
+    const message = await protectOne(w);
+    await refresh();
+    return message;
+  }
+
+  async function protectAll() {
+    setBulkBusy(true);
+    setNotice(null);
+    let firstProblem: string | null = null;
+    for (const w of publicOriginals) {
+      const message = await protectOne(w);
+      if (message && !firstProblem) firstProblem = message;
+    }
+    await refresh();
+    setNotice(firstProblem);
+    setBulkBusy(false);
   }
 
   return (
@@ -78,7 +143,7 @@ export default function Dashboard({ email }: { email: string }) {
           <div className="rounded-2xl border border-line bg-panel p-5">
             <div className="flex items-baseline justify-between gap-3">
               <h2 className="font-display text-base font-bold">Storage</h2>
-              <p className="text-sm text-mute">{formatBytes(used)} of 1 GB</p>
+              <p className="text-sm tabular-nums text-mute">{formatBytes(used)} of 1 GB</p>
             </div>
             <div
               className="mt-3 h-2 overflow-hidden rounded-full bg-ink"
@@ -103,6 +168,33 @@ export default function Dashboard({ email }: { email: string }) {
           <h2 id="library-title" className="mb-3 font-display text-lg font-bold">
             Library{loaded ? ` (${items.length})` : ''}
           </h2>
+
+          {publicOriginals.length > 0 && (
+            <div className="mb-4 rounded-2xl border border-danger/40 bg-panel p-4">
+              <p className="text-sm">
+                {publicOriginals.length === 1
+                  ? '1 wallpaper still has a public original.'
+                  : `${publicOriginals.length} wallpapers still have a public original.`}{' '}
+                <span className="text-mute">
+                  Anyone with the link can download it at full size. Move it to private storage.
+                </span>
+              </p>
+              <button
+                type="button"
+                className="btn-primary mt-3"
+                disabled={bulkBusy}
+                onClick={protectAll}
+              >
+                {bulkBusy ? 'Working…' : 'Make all private'}
+              </button>
+            </div>
+          )}
+          {notice && (
+            <p role="alert" className="mb-3 text-sm text-danger">
+              {notice}
+            </p>
+          )}
+
           {loadError ? (
             <p role="alert" className="text-sm text-danger">
               Couldn&apos;t load the library: {loadError}
@@ -110,7 +202,12 @@ export default function Dashboard({ email }: { email: string }) {
           ) : !loaded ? (
             <p className="text-sm text-mute">Loading…</p>
           ) : (
-            <Library items={items} onRemove={removeWallpaper} />
+            <Library
+              items={items}
+              onRemove={removeWallpaper}
+              onProtect={protectWallpaper}
+              busy={bulkBusy}
+            />
           )}
         </section>
       </div>

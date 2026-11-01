@@ -14,6 +14,12 @@
   body {
     @apply bg-ink font-body text-bone antialiased;
   }
+  /* No drag-out, no text-style selection, no long-press save menu on images. */
+  img {
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
   h1,
   h2,
   h3 {

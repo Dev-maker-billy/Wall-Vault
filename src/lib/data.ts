@@ -17,7 +17,8 @@ export async function fetchWallpapers(): Promise<WallpaperResult> {
     const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { data, error } = await supabase
       .from('wallpapers')
-      .select('*')
+      // Named columns only: visitors are not allowed to read where private originals are stored.
+      .select('id,title,tags,file_path,thumb_path,width,height,size_bytes,created_at')
       .order('created_at', { ascending: false })
       .limit(500);
     if (error) return { items: [], configured: true, error: error.message };
