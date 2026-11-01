@@ -129,6 +129,88 @@ dialog[open]::backdrop {
   animation: fade-in 0.3s ease-out;
 }
 
+/* ---------- Custom cursor (mouse only, homepage) ---------- */
+
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+.cursor-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  transition: opacity 0.25s ease-out;
+}
+.cursor-root[data-hidden='true'] {
+  opacity: 0;
+}
+/* The elements JS moves every frame. They never have a transition of their own. */
+.cursor-follow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+.cursor-dot {
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #a594ff;
+  transition: opacity 0.2s ease-out;
+}
+.cursor-ring {
+  --s: 1;
+  --p: 1;
+  position: absolute;
+  left: -17px;
+  top: -17px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(237, 235, 248, 0.55);
+  transform: scale(calc(var(--s) * var(--p)));
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.25s ease-out,
+    border-color 0.25s ease-out;
+}
+.cursor-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #120c33;
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+}
+.cursor-root[data-mode='link'] .cursor-ring {
+  --s: 1.55;
+  border-color: #a594ff;
+  background-color: rgba(165, 148, 255, 0.14);
+}
+.cursor-root[data-mode='tile'] .cursor-ring {
+  --s: 2.5;
+  border-color: #a594ff;
+  background-color: #a594ff;
+}
+.cursor-root[data-mode='tile'] .cursor-dot {
+  opacity: 0;
+}
+.cursor-root[data-mode='tile'] .cursor-label {
+  opacity: 1;
+  transition-delay: 0.08s;
+}
+.cursor-root[data-down='true'] .cursor-ring {
+  --p: 0.82;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

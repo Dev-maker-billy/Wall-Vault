@@ -115,6 +115,7 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
               <button
                 type="button"
                 onClick={() => setSelected(w)}
+                data-cursor="tile"
                 aria-label={`${w.title}: choose a size and download`}
                 className="group block w-full text-left"
               >

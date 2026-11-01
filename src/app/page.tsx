@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import Cursor from '@/components/Cursor';
 import Gallery from '@/components/Gallery';
 import HeroFrames from '@/components/HeroFrames';
 import { fetchWallpapers } from '@/lib/data';
@@ -14,6 +15,7 @@ export default async function Home() {
 
   return (
     <main>
+      <Cursor />
       {/* Without JavaScript the scroll animations can't run, so show everything. */}
       <noscript>
         <style>{'.reveal{opacity:1!important;transform:none!important}'}</style>
