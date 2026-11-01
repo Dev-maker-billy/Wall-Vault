@@ -45,6 +45,10 @@ export default async function Home() {
       </header>
 
       <Gallery wallpapers={items} configured={configured} error={error} />
+
+      <footer className="mx-auto max-w-[1600px] border-t border-line px-4 py-8 text-sm text-mute sm:px-8">
+        Made by <span className="font-semibold text-bone">Aman Singh</span>
+      </footer>
     </main>
   );
 }
