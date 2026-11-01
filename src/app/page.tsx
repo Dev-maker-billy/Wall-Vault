@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Gallery from '@/components/Gallery';
 import HeroFrames from '@/components/HeroFrames';
 import { fetchWallpapers } from '@/lib/data';
@@ -5,18 +6,23 @@ import { fetchWallpapers } from '@/lib/data';
 // Re-fetch from Supabase at most once a minute. Keeps the page static and fast on Vercel's free tier.
 export const revalidate = 60;
 
+const delay = (ms: number) => ({ '--d': `${ms}ms` }) as CSSProperties;
+
 export default async function Home() {
   const { items, configured, error } = await fetchWallpapers();
   const featured = items[0];
 
   return (
     <main>
+      {/* Without JavaScript the scroll animations can't run, so show everything. */}
+      <noscript>
+        <style>{'.reveal{opacity:1!important;transform:none!important}'}</style>
+      </noscript>
+
       <header className="mx-auto max-w-[1600px] px-4 sm:px-8">
-        <div className="flex items-center justify-between py-5">
+        <div className="hero-fade flex items-center justify-between py-5">
           <span className="font-display text-base font-bold tracking-tight">Wall Vault</span>
-          {items.length > 0 && (
-            <span className="text-sm text-mute">{items.length} wallpapers</span>
-          )}
+          {items.length > 0 && <span className="text-sm text-mute">{items.length} wallpapers</span>}
         </div>
 
         <div
@@ -26,16 +32,23 @@ export default async function Home() {
         >
           <div>
             <h1 className="font-display text-[2.4rem] font-bold leading-[1.05] tracking-tight sm:text-6xl xl:text-7xl">
-              One wallpaper.
-              <br />
-              Every screen size.
+              <span className="-mb-[0.14em] block overflow-hidden pb-[0.14em]">
+                <span className="hero-line" style={delay(0)}>
+                  One wallpaper.
+                </span>
+              </span>
+              <span className="-mb-[0.14em] block overflow-hidden pb-[0.14em]">
+                <span className="hero-line" style={delay(140)}>
+                  Every screen size.
+                </span>
+              </span>
             </h1>
-            <p className="mt-6 max-w-md text-lg leading-relaxed text-mute">
+            <p className="hero-fade mt-6 max-w-md text-lg leading-relaxed text-mute" style={delay(450)}>
               Pick a wallpaper, then pick your screen. It downloads already cropped to the exact
               pixel size.
             </p>
             {featured && (
-              <a href="#gallery" className="btn-primary mt-8 px-6 py-3">
+              <a href="#gallery" className="btn-primary hero-fade mt-8 px-6 py-3" style={delay(600)}>
                 Browse wallpapers
               </a>
             )}

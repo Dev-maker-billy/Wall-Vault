@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Wallpaper } from '@/lib/types';
 import { storageUrl } from '@/lib/storage';
 import DownloadModal from './DownloadModal';
@@ -14,6 +14,7 @@ type Props = {
 export default function Gallery({ wallpapers, configured, error }: Props) {
   const [activeTag, setActiveTag] = useState<string>('all');
   const [selected, setSelected] = useState<Wallpaper | null>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   // Tags come straight from the data, most used first.
   const tags = useMemo(() => {
@@ -26,6 +27,30 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
     () => (activeTag === 'all' ? wallpapers : wallpapers.filter((w) => w.tags.includes(activeTag))),
     [wallpapers, activeTag],
   );
+
+  // Tiles ease in as they enter the screen. Changing the filter remounts the list, so it replays.
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const tiles = list.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-in)');
+    if (!('IntersectionObserver' in window)) {
+      tiles.forEach((tile) => tile.classList.add('is-in'));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-in');
+            observer.unobserve(entry.target);
+          }
+        }
+      },
+      { rootMargin: '0px 0px -6% 0px', threshold: 0.08 },
+    );
+    tiles.forEach((tile) => observer.observe(tile));
+    return () => observer.disconnect();
+  }, [visible]);
 
   if (!configured) {
     return (
@@ -69,14 +94,23 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
         Justified rows: every wallpaper in a row has the same height and keeps its own shape.
         Each item's width follows its aspect ratio; the trailing ::after stops the last row stretching.
       */}
-      <ul className="mx-auto flex max-w-[1600px] flex-wrap gap-2 px-4 py-6 [--row:130px] after:grow-[1000] after:basis-0 after:content-[''] sm:px-8 sm:[--row:200px] xl:[--row:260px]">
-        {visible.map((w) => {
+      <ul
+        key={activeTag}
+        ref={listRef}
+        className="mx-auto flex max-w-[1600px] flex-wrap gap-2 px-4 py-6 [--row:130px] after:grow-[1000] after:basis-0 after:content-[''] sm:px-8 sm:[--row:200px] xl:[--row:260px]"
+      >
+        {visible.map((w, i) => {
           const ratio = w.width / w.height;
           return (
             <li
               key={w.id}
-              className="relative overflow-hidden rounded-md bg-panel"
-              style={{ flexGrow: ratio * 100, flexBasis: `calc(${ratio} * var(--row))` }}
+              data-reveal
+              className="reveal relative overflow-hidden rounded-md bg-panel"
+              style={{
+                flexGrow: ratio * 100,
+                flexBasis: `calc(${ratio} * var(--row))`,
+                transitionDelay: `${(i % 6) * 55}ms`,
+              }}
             >
               <button
                 type="button"
@@ -94,7 +128,7 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
                   height={w.height}
                   loading="lazy"
                   decoding="async"
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out [@media(hover:hover)]:group-hover:scale-[1.06]"
                 />
                 <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 to-transparent p-3 pt-12 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
                   <span className="truncate text-sm font-semibold">{w.title}</span>
@@ -129,7 +163,7 @@ function Pill({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-4 pr-3 text-sm ${
+      className={`flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-4 pr-3 text-sm transition duration-200 active:scale-95 ${
         active
           ? 'border-glow bg-glow font-semibold text-glow-ink'
           : 'border-line text-bone hover:border-mute'
