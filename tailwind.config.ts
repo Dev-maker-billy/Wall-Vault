@@ -5,17 +5,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: '#0E1114',
-        panel: '#161A1F',
-        line: '#272C33',
-        bone: '#ECE7DD',
-        mute: '#8D929B',
-        brass: '#C8A15A',
-        'brass-deep': '#1B1407',
-        danger: '#E5806B',
+        ink: '#0B0E1A',
+        panel: '#141830',
+        line: '#272D4D',
+        bone: '#EDEBF8',
+        mute: '#9499B8',
+        glow: '#A594FF',
+        'glow-ink': '#120C33',
+        danger: '#FF8A8A',
       },
       fontFamily: {
-        display: ['"Bricolage Grotesque Variable"', 'system-ui', 'sans-serif'],
+        display: ['"Unbounded Variable"', 'system-ui', 'sans-serif'],
         body: ['"Instrument Sans Variable"', 'system-ui', 'sans-serif'],
       },
     },

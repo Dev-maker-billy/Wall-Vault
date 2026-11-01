@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource-variable/unbounded';
 import '@fontsource-variable/instrument-sans';
 import './globals.css';
 
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0E1114',
+  themeColor: '#0B0E1A',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -40,7 +40,8 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
   if (error) {
     return (
       <Notice title="Couldn't load wallpapers">
-        Supabase returned an error: {error}. Check that you ran <code className="text-bone">supabase/schema.sql</code>.
+        Supabase returned an error: {error}. Check that you ran{' '}
+        <code className="text-bone">supabase/schema.sql</code>.
       </Notice>
     );
   }
@@ -50,60 +51,77 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
   }
 
   return (
-    <>
-      <div className="sticky top-0 z-10 border-y border-line bg-ink/90 backdrop-blur">
+    <section id="gallery" className="scroll-mt-0">
+      <div className="sticky top-0 z-10 border-b border-line bg-ink/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1600px] gap-2 overflow-x-auto px-4 py-3 sm:px-8">
-          <Pill active={activeTag === 'all'} onClick={() => setActiveTag('all')}>
-            All <span className="opacity-60">{wallpapers.length}</span>
+          <Pill active={activeTag === 'all'} onClick={() => setActiveTag('all')} count={wallpapers.length}>
+            All
           </Pill>
           {tags.map(([tag, count]) => (
-            <Pill key={tag} active={activeTag === tag} onClick={() => setActiveTag(tag)}>
-              {tag} <span className="opacity-60">{count}</span>
+            <Pill key={tag} active={activeTag === tag} onClick={() => setActiveTag(tag)} count={count}>
+              {tag}
             </Pill>
           ))}
         </div>
       </div>
 
-      <ul className="mx-auto max-w-[1600px] columns-2 gap-3 px-4 py-6 sm:px-8 md:columns-3 xl:columns-4">
-        {visible.map((w) => (
-          <li key={w.id} className="mb-3 break-inside-avoid">
-            <button
-              type="button"
-              onClick={() => setSelected(w)}
-              aria-label={`${w.title}: choose a size and download`}
-              className="group relative block w-full overflow-hidden rounded-md bg-panel text-left"
+      {/*
+        Justified rows: every wallpaper in a row has the same height and keeps its own shape.
+        Each item's width follows its aspect ratio; the trailing ::after stops the last row stretching.
+      */}
+      <ul className="mx-auto flex max-w-[1600px] flex-wrap gap-2 px-4 py-6 [--row:130px] after:grow-[1000] after:basis-0 after:content-[''] sm:px-8 sm:[--row:200px] xl:[--row:260px]">
+        {visible.map((w) => {
+          const ratio = w.width / w.height;
+          return (
+            <li
+              key={w.id}
+              className="relative overflow-hidden rounded-md bg-panel"
+              style={{ flexGrow: ratio * 100, flexBasis: `calc(${ratio} * var(--row))` }}
             >
-              {/* Plain img on purpose: thumbnails are pre-sized at upload, so Vercel image optimization isn't needed. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={storageUrl(w.thumb_path)}
-                alt={w.title}
-                width={w.width}
-                height={w.height}
-                loading="lazy"
-                decoding="async"
-                className="block h-auto w-full"
-              />
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-12 text-sm font-medium opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                {w.title}
-              </span>
-            </button>
-          </li>
-        ))}
+              <button
+                type="button"
+                onClick={() => setSelected(w)}
+                aria-label={`${w.title}: choose a size and download`}
+                className="group block w-full text-left"
+              >
+                <span className="block" style={{ paddingBottom: `${(1 / ratio) * 100}%` }} />
+                {/* Plain img on purpose: thumbnails are pre-sized at upload, so Vercel image optimization isn't needed. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={storageUrl(w.thumb_path)}
+                  alt={w.title}
+                  width={w.width}
+                  height={w.height}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 to-transparent p-3 pt-12 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
+                  <span className="truncate text-sm font-semibold">{w.title}</span>
+                  <span className="shrink-0 text-xs text-bone/70">
+                    {w.width} × {w.height}
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       {selected && <DownloadModal wallpaper={selected} onClose={() => setSelected(null)} />}
-    </>
+    </section>
   );
 }
 
 function Pill({
   active,
   onClick,
+  count,
   children,
 }: {
   active: boolean;
   onClick: () => void;
+  count: number;
   children: React.ReactNode;
 }) {
   return (
@@ -111,22 +129,23 @@ function Pill({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`shrink-0 rounded-full border px-4 py-1.5 text-sm ${
+      className={`flex shrink-0 items-center gap-2 rounded-full border py-1.5 pl-4 pr-3 text-sm ${
         active
-          ? 'border-brass bg-brass font-semibold text-brass-deep'
+          ? 'border-glow bg-glow font-semibold text-glow-ink'
           : 'border-line text-bone hover:border-mute'
       }`}
     >
       {children}
+      <span className={`text-xs ${active ? 'text-glow-ink/70' : 'text-mute'}`}>{count}</span>
     </button>
   );
 }
 
 function Notice({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-16 sm:px-8">
+    <div className="mx-auto max-w-[1600px] px-4 py-12 sm:px-8">
       <div className="max-w-lg rounded-xl border border-line bg-panel p-6">
-        <h2 className="font-display text-xl font-bold">{title}</h2>
+        <h2 className="font-display text-lg font-bold">{title}</h2>
         <p className="mt-2 text-sm leading-relaxed text-mute">{children}</p>
       </div>
     </div>

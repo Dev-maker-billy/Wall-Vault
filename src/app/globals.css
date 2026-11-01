@@ -9,16 +9,17 @@
 @layer base {
   html {
     @apply bg-ink;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-ink font-body text-bone antialiased;
   }
   :focus-visible {
-    outline: 2px solid theme('colors.brass');
+    outline: 2px solid theme('colors.glow');
     outline-offset: 2px;
   }
   dialog::backdrop {
-    background: rgba(8, 10, 12, 0.82);
+    background: rgba(5, 7, 14, 0.85);
   }
 }
 
@@ -27,11 +28,29 @@
     @apply w-full rounded-md border border-line bg-ink px-3 py-2.5 text-sm text-bone placeholder:text-mute;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-md bg-brass px-4 py-2.5 text-sm font-semibold text-brass-deep disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-md bg-glow px-5 py-2.5 text-sm font-semibold text-glow-ink disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-quiet {
     @apply inline-flex items-center justify-center rounded-md border border-line px-3 py-2 text-sm text-bone hover:border-mute disabled:cursor-not-allowed disabled:opacity-50;
   }
+}
+
+/* The one page-load moment: the monitor lands, then the phone follows. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-rise {
+  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.hero-rise-late {
+  animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -39,6 +58,10 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
   }
 }

@@ -113,9 +113,9 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
       onClick={(e) => {
         if (e.target === dialogRef.current) dialogRef.current?.close();
       }}
-      className="m-auto max-h-[calc(100dvh-1rem)] w-[min(1080px,calc(100vw-1rem))] overflow-hidden rounded-xl border border-line bg-panel p-0 text-bone"
+      className="m-auto max-h-[calc(100dvh-1rem)] w-[min(1120px,calc(100vw-1rem))] overflow-hidden rounded-2xl border border-line bg-panel p-0 text-bone"
     >
-      <div className="grid max-h-[calc(100dvh-1rem)] grid-rows-[minmax(0,38dvh)_minmax(0,1fr)] md:h-[min(720px,calc(100dvh-1rem))] md:grid-cols-[minmax(0,1fr)_360px] md:grid-rows-1">
+      <div className="grid max-h-[calc(100dvh-1rem)] grid-rows-[minmax(0,36dvh)_minmax(0,1fr)] md:h-[min(740px,calc(100dvh-1rem))] md:grid-cols-[minmax(0,1fr)_400px] md:grid-rows-1">
         {/* Preview with live crop frame */}
         <div ref={stageRef} className="relative flex items-center justify-center bg-ink">
           {scale > 0 && (
@@ -130,7 +130,7 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
               {crop && (
                 <div
                   aria-hidden="true"
-                  className="absolute border-2 border-brass shadow-[0_0_0_9999px_rgba(8,10,12,0.7)] transition-[left,top,width,height] duration-300 ease-out"
+                  className="absolute border-2 border-glow shadow-[0_0_0_9999px_rgba(5,7,14,0.74)] transition-[left,top,width,height] duration-300 ease-out"
                   style={{
                     left: crop.sx * scale,
                     top: crop.sy * scale,
@@ -145,12 +145,12 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
 
         {/* Options */}
         <div className="flex min-h-0 flex-col overflow-y-auto border-t border-line md:border-l md:border-t-0">
-          <div className="flex items-start justify-between gap-3 p-5 pb-3">
+          <div className="flex items-start justify-between gap-3 p-5 pb-4">
             <div className="min-w-0">
-              <h2 id="download-title" className="truncate font-display text-xl font-bold">
+              <h2 id="download-title" className="truncate font-display text-lg font-bold">
                 {wallpaper.title}
               </h2>
-              <p className="mt-0.5 text-sm text-mute">
+              <p className="mt-1 text-sm text-mute">
                 Original {wallpaper.width.toLocaleString()} × {wallpaper.height.toLocaleString()}
               </p>
             </div>
@@ -158,38 +158,51 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
               type="button"
               onClick={() => dialogRef.current?.close()}
               className="btn-quiet shrink-0"
-              aria-label="Close"
             >
               Close
             </button>
           </div>
 
           <div className="flex-1 space-y-5 px-5 pb-5">
-            {GROUPS.map((group) => (
-              <fieldset key={group}>
-                <legend className="mb-2 text-sm font-semibold text-mute">{group}</legend>
-                <div className="space-y-1.5">
-                  {PRESETS.filter((p) => p.group === group).map((p) => (
-                    <Option
-                      key={p.id}
-                      checked={choice === p.id}
-                      onChange={() => setChoice(p.id)}
-                      title={`${p.label}`}
-                      detail={`${p.width} × ${p.height}, ${p.ratio}`}
-                    />
-                  ))}
-                </div>
-              </fieldset>
-            ))}
+            {GROUPS.map((group) => {
+              const presets = PRESETS.filter((p) => p.group === group);
+              return (
+                <fieldset key={group}>
+                  <legend className="mb-2 text-sm font-semibold text-mute">{group}</legend>
+                  <div className={`grid gap-2 ${presets.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                    {presets.map((p) => (
+                      <SizeCard
+                        key={p.id}
+                        checked={choice === p.id}
+                        onChange={() => setChoice(p.id)}
+                        label={p.label}
+                        dims={`${p.width} × ${p.height}`}
+                        w={p.width}
+                        h={p.height}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+              );
+            })}
 
             <fieldset>
               <legend className="mb-2 text-sm font-semibold text-mute">Custom</legend>
-              <Option
-                checked={choice === 'custom'}
-                onChange={() => setChoice('custom')}
-                title="Your own size"
-                detail="Width and height in pixels"
-              />
+              <label
+                className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-glow ${
+                  choice === 'custom' ? 'border-glow bg-ink' : 'border-line hover:border-mute'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="size"
+                  checked={choice === 'custom'}
+                  onChange={() => setChoice('custom')}
+                  className="sr-only"
+                />
+                <span className="font-medium">Your own size</span>
+                <span className="text-mute">Width × height in pixels</span>
+              </label>
               {choice === 'custom' && (
                 <div className="mt-2 flex items-center gap-2">
                   <label className="flex-1">
@@ -226,7 +239,7 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
 
             <fieldset>
               <legend className="mb-2 text-sm font-semibold text-mute">File type</legend>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 rounded-lg border border-line p-1">
                 <FormatButton active={format === 'jpeg'} onClick={() => setFormat('jpeg')}>
                   JPG, smaller
                 </FormatButton>
@@ -263,26 +276,37 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
   );
 }
 
-function Option({
+/** A size choice drawn as a small outline in the same shape as the screen it produces. */
+function SizeCard({
   checked,
   onChange,
-  title,
-  detail,
+  label,
+  dims,
+  w,
+  h,
 }: {
   checked: boolean;
   onChange: () => void;
-  title: string;
-  detail: string;
+  label: string;
+  dims: string;
+  w: number;
+  h: number;
 }) {
   return (
     <label
-      className={`flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2.5 text-sm has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brass ${
-        checked ? 'border-brass bg-ink' : 'border-line hover:border-mute'
+      className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border px-2 py-3 text-center has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-glow ${
+        checked ? 'border-glow bg-ink text-glow' : 'border-line text-mute hover:border-mute'
       }`}
     >
       <input type="radio" name="size" checked={checked} onChange={onChange} className="sr-only" />
-      <span className="font-medium">{title}</span>
-      <span className="text-mute">{detail}</span>
+      <span aria-hidden="true" className="flex h-8 items-center">
+        <span
+          className="block rounded-[3px] border-[1.5px] border-current"
+          style={{ height: 28, aspectRatio: `${w} / ${h}` }}
+        />
+      </span>
+      <span className="text-sm font-medium text-bone">{label}</span>
+      <span className="text-xs text-mute">{dims}</span>
     </label>
   );
 }
@@ -301,8 +325,8 @@ function FormatButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex-1 rounded-md border px-3 py-2 text-sm ${
-        active ? 'border-brass bg-ink font-medium' : 'border-line text-mute hover:border-mute'
+      className={`rounded-md px-3 py-2 text-sm ${
+        active ? 'bg-ink font-medium text-bone' : 'text-mute hover:text-bone'
       }`}
     >
       {children}
