@@ -82,7 +82,7 @@ export default function HeroFrames({ wallpaper }: { wallpaper: Wallpaper }) {
       >
         <div className="hero-rise">
           <div className="rounded-2xl border border-line bg-panel p-2.5">
-            <div className="relative aspect-video overflow-hidden rounded-lg bg-ink">
+            <div className="watermark relative aspect-video overflow-hidden rounded-lg bg-ink">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" className="h-full w-full object-cover" />
               <div
@@ -119,7 +119,7 @@ export default function HeroFrames({ wallpaper }: { wallpaper: Wallpaper }) {
           >
             <div className="float">
               <div className="rounded-[1.6rem] border border-line bg-panel p-1.5 shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7)]">
-                <div className="aspect-[9/19.5] overflow-hidden rounded-[1.25rem] bg-ink">
+                <div className="watermark relative aspect-[9/19.5] overflow-hidden rounded-[1.25rem] bg-ink">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={src} alt="" className="h-full w-full object-cover" />
                 </div>

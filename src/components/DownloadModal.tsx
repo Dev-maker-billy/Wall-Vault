@@ -131,7 +131,7 @@ export default function DownloadModal({ wallpaper, onClose }: Props) {
         {/* Preview with live crop frame */}
         <div ref={stageRef} className="relative flex items-center justify-center bg-ink">
           {scale > 0 && (
-            <div className="relative overflow-hidden" style={{ width: shownW, height: shownH }}>
+            <div className="watermark relative overflow-hidden" style={{ width: shownW, height: shownH }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={storageUrl(wallpaper.thumb_path)}

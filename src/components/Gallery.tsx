@@ -172,7 +172,7 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
             <li
               key={w.id}
               data-reveal
-              className="reveal relative overflow-hidden rounded-md bg-panel"
+              className="reveal watermark relative overflow-hidden rounded-md bg-panel"
               style={{
                 flexGrow: ratio * 100,
                 flexBasis: `calc(${ratio} * var(--row))`,
@@ -198,7 +198,7 @@ export default function Gallery({ wallpapers, configured, error }: Props) {
                   decoding="async"
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out [@media(hover:hover)]:group-hover:scale-[1.06]"
                 />
-                <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 to-transparent p-3 pt-12 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 to-transparent p-3 pt-12 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100">
                   <span className="truncate text-sm font-semibold">{w.title}</span>
                   <span className="shrink-0 text-xs tabular-nums text-bone/70">
                     {w.width} × {w.height}
